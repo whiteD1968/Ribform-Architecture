@@ -11,6 +11,7 @@ interface Store {
   view: View;
   wireframe: boolean;
   showRings: boolean;
+  showStations: boolean;
   isolate: boolean;
   ribIndex: number;
   resetKey: number;
@@ -33,6 +34,7 @@ export const useStore = create<Store>()(
       view: 'ribs',
       wireframe: false,
       showRings: true,
+      showStations: true,
       isolate: false,
       ribIndex: 0,
       resetKey: 0,

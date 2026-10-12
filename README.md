@@ -25,7 +25,8 @@ The application is entirely local. No backend, API key, CAD service, or external
 - React, TypeScript, Vite, React Three Fiber / Three.js, and Zustand.
 - Five-station Clove pendant example, 32 individual radial ribs, two support rings.
 - Add/remove profile stations; edit elevation, radius, independent XY scales, rotation, translation, and Clove modulation.
-- Drag 12 control points in the XY editor; keyboard arrow-key control is also supported.
+- Select a labeled horizontal station contour directly on the 3D form; the tree and XY editor follow the same station.
+- Choose 4–64 control points per profile, then drag them in the XY editor; keyboard arrow-key control is also supported. Changing the count resamples existing edits, with possible shape simplification when reducing points.
 - Cubic interpolation between corresponding angular samples and a capped triangulated loft.
 - Outer-only, explicitly approximate radial inner offset, and independently editable inner surfaces.
 - Triangle/plane section extraction into closed contours, holes and disconnected components; positive radial half-plane clipping.

@@ -10,6 +10,7 @@ import type { BuildResult, MeshData, PlanarPart } from '../geometry/types';
 import { extrude } from '../geometry/sections';
 import { bounds } from '../geometry/math';
 import { useStore } from '../state/store';
+import StationContours from './StationContours';
 
 class ViewportBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -86,8 +87,8 @@ function Part({
     />
   );
 }
-function Scene({ result }: { result: BuildResult }) {
-  const { view, showRings, wireframe, isolate, ribIndex, resetKey } = useStore();
+function Scene({ result, onSelectStation }: { result: BuildResult; onSelectStation: () => void }) {
+  const { view, showRings, showStations, wireframe, isolate, ribIndex, resetKey } = useStore();
   const controls = useRef<OrbitControlsImpl>(null),
     { camera } = useThree();
   const box = useMemo(
@@ -154,6 +155,7 @@ function Scene({ result }: { result: BuildResult }) {
         result.rings.map((part) => (
           <Part key={part.id} part={part} selected={false} wireframe={wireframe} />
         ))}
+      {showStations && !isolate && <StationContours onSelectStation={onSelectStation} />}
       <OrbitControls
         ref={controls}
         makeDefault
@@ -168,7 +170,13 @@ function Scene({ result }: { result: BuildResult }) {
     </>
   );
 }
-export default function Viewport({ result }: { result: BuildResult | null }) {
+export default function Viewport({
+  result,
+  onSelectStation,
+}: {
+  result: BuildResult | null;
+  onSelectStation: () => void;
+}) {
   return (
     <ViewportBoundary>
       <Canvas
@@ -176,7 +184,9 @@ export default function Viewport({ result }: { result: BuildResult | null }) {
         dpr={[1, 1.75]}
         gl={{ antialias: true }}
       >
-        <Suspense fallback={null}>{result && <Scene result={result} />}</Suspense>
+        <Suspense fallback={null}>
+          {result && <Scene result={result} onSelectStation={onSelectStation} />}
+        </Suspense>
       </Canvas>
     </ViewportBoundary>
   );

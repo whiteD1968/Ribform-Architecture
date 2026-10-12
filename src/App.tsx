@@ -25,7 +25,7 @@ import {
 import { useStore } from './state/store';
 import { useGeometry } from './state/useGeometry';
 import { cloveProject, nextProfile, validateProject } from './geometry/build';
-import { sortedProfiles, validateProfiles } from './geometry/profiles';
+import { resizeProfileControls, sortedProfiles, validateProfiles } from './geometry/profiles';
 import type { Project } from './geometry/types';
 import Viewport from './components/Viewport';
 import ProfileEditor from './components/ProfileEditor';
@@ -314,7 +314,7 @@ export default function App() {
             ) : (
               <>
                 <div className="viewport-wrap">
-                  <Viewport result={result} />
+                  <Viewport result={result} onSelectStation={() => setInspector('profile')} />
                   <div className="viewport-title">
                     <span className="eyebrow">FORM STUDY / 001</span>
                     <h1>
@@ -340,6 +340,15 @@ export default function App() {
                     <span className="prototype-pill">PROTOTYPE</span>
                   </div>
                   <div className="view-toolbar" role="group" aria-label="Viewport display">
+                    <button
+                      title="Toggle station contours"
+                      aria-label="Toggle station contours"
+                      aria-pressed={s.showStations}
+                      className={s.showStations ? 'active' : ''}
+                      onClick={() => s.set({ showStations: !s.showStations })}
+                    >
+                      <Circle size={16} />
+                    </button>
                     {(
                       [
                         { id: 'ribs', label: 'Ribs', icon: Layers3 },
@@ -417,7 +426,11 @@ export default function App() {
                         Reset control points
                       </button>
                     </div>
-                    <ProfileEditor profile={profile} large />
+                    <ProfileEditor
+                      key={`${s.surface}-${profile.id}-${profile.controls.length}`}
+                      profile={profile}
+                      large
+                    />
                   </div>
                 )}
               </>
@@ -773,7 +786,24 @@ export default function App() {
                 </section>
                 <section className="control-section">
                   <h3>Profile shape</h3>
-                  <ProfileEditor profile={profile} />
+                  <Field
+                    label="Control points"
+                    value={profile.controls.length}
+                    min={4}
+                    max={64}
+                    unit="points"
+                    onChange={(value) =>
+                      update({ controls: resizeProfileControls(profile, Math.round(value)) })
+                    }
+                  />
+                  <p className="field-note">
+                    This station controls the highlighted horizontal contour. Changing the point
+                    count resamples its shape; fewer points can simplify it.
+                  </p>
+                  <ProfileEditor
+                    key={`${s.surface}-${profile.id}-${profile.controls.length}`}
+                    profile={profile}
+                  />
                   <div className="field-pair">
                     <Field label="Elevation" value={profile.z} onChange={(v) => update({ z: v })} />
                     <Field

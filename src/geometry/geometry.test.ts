@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildProject, cloveProject, makeProfile } from './build';
-import { loft, profilePoint, surfaceLoop } from './profiles';
+import { loft, profilePoint, resizeProfileControls, stationContour, surfaceLoop } from './profiles';
 import { extrude, horizontalFrame, positiveHalf, radialFrame, section } from './sections';
 import { area, bounds, cross, dot, multiArea, scanIntervals, sub, worldPoint } from './math';
 import type { Project, Vec2 } from './types';
@@ -16,6 +16,64 @@ function cylinder(): Project {
   return p;
 }
 describe('profiles and lofts in millimeters', () => {
+  it('links each editable horizontal contour exactly to its station row in the loft', () => {
+    const p = cylinder();
+    p.outer.profiles.splice(1, 0, {
+      ...makeProfile('middle', 80, 125),
+      center: [14, -9],
+      rotation: 23,
+    });
+    const middle = p.outer.profiles[1];
+    middle.controls[2] = [0.08, -0.04];
+    const contour = stationContour(middle, 64);
+    expect(contour.every((point) => point[2] === 80)).toBe(true);
+    const mesh = loft(p.outer, 64, 4);
+    mesh.vertices
+      .slice(4 * 64, 5 * 64)
+      .forEach((point, i) =>
+        point.forEach((v, axis) => expect(v).toBeCloseTo(contour[i][axis], 10)),
+      );
+    middle.controls[2] = [0.16, -0.04];
+    expect(stationContour(middle, 64)).not.toEqual(contour);
+    const changed = loft(p.outer, 64, 4);
+    expect(changed.vertices.slice(0, 64)).toEqual(mesh.vertices.slice(0, 64));
+    expect(changed.vertices.slice(4 * 64, 5 * 64)).not.toEqual(mesh.vertices.slice(4 * 64, 5 * 64));
+  });
+  it('resamples point counts without resetting edits or changing retained handle positions', () => {
+    const profile = makeProfile('edited', 50, 100);
+    profile.controls[1] = [0.15, -0.1];
+    profile.controls[5] = [-0.05, 0.2];
+    profile.center = [30, -20];
+    profile.scaleX = 1.2;
+    profile.rotation = 35;
+    const original = structuredClone(profile);
+    const next = { ...profile, controls: resizeProfileControls(profile, 24) };
+    expect(next.controls).toHaveLength(24);
+    for (let i = 0; i < 24; i++) {
+      const angle = (i / 24) * Math.PI * 2;
+      const before = profilePoint(profile, angle),
+        after = profilePoint(next, angle);
+      after.forEach((v, axis) => expect(v).toBeCloseTo(before[axis], 10));
+    }
+    expect(profile).toEqual(original);
+    const reduced = resizeProfileControls(next, 6);
+    expect(reduced).toHaveLength(6);
+    expect(reduced.some((point) => Math.hypot(...point) > 0)).toBe(true);
+    expect(() => resizeProfileControls(profile, 3)).toThrow(/between 4 and 64/);
+    expect(() => resizeProfileControls(profile, 4.5)).toThrow(/integer/);
+    expect(() => resizeProfileControls(profile, 65)).toThrow(/between 4 and 64/);
+  });
+  it('preserves unedited parametric shapes at every supported control-point count', () => {
+    const profile = makeProfile('seed', 0, 100);
+    for (const count of [4, 8, 16, 32, 64]) {
+      const resized = { ...profile, controls: resizeProfileControls(profile, count) };
+      expect(stationContour(resized, 96)).toEqual(stationContour(profile, 96));
+    }
+    const p = cylinder();
+    p.outer.profiles[0].controls = resizeProfileControls(p.outer.profiles[0], 4);
+    p.outer.profiles[1].controls = resizeProfileControls(p.outer.profiles[1], 64);
+    expect(buildProject(p).issues.filter((i) => i.severity === 'error')).toEqual([]);
+  });
   it('generates a circle and applies scale, rotation, and translation in order', () => {
     const p = makeProfile('a', 0, 100);
     p.amplitude = 0;

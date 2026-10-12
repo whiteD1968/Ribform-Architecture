@@ -4,7 +4,9 @@
 
 The model uses millimeters in a right-handed XYZ system; Z is elevation. Profile IDs are stable. Stations are sorted by elevation and must be separated by at least 0.1 mm. Profile coordinates are not screen pixels.
 
-Each section is parameterized by angle. Its local radial seed is `radius × (1 + amplitude × cos(lobes × angle))`. A periodic Catmull-Rom displacement field through 12 editable XY handles modifies that seed. XY scaling, rotation in degrees, and center translation follow, in that order. Zero displacements and zero modulation yield a sampled ellipse (or circle).
+Each section is parameterized by angle. Its local radial seed is `radius × (1 + amplitude × cos(lobes × angle))`. A periodic Catmull-Rom displacement field through 4–64 editable XY handles (12 by default) modifies that seed. XY scaling, rotation in degrees, and center translation follow, in that order. Zero displacements and zero modulation yield a sampled ellipse (or circle).
+
+Each station's displayed horizontal contour uses the same angular samples and elevation as its corresponding loft row. Selecting its 3D label links the tree, inspector, and XY workbench to the same profile ID. Control-point counts are independent per station and per surface. Changing the count samples the existing displacement field at the new handle angles; it preserves those sampled positions rather than resetting edits. Between-handle geometry can change, especially when reducing the count. Mesh tessellation resolution remains independent of handle count.
 
 Between stations, cubic Hermite interpolation operates on corresponding angular samples. Shared finite-difference tangents provide C1 continuity in elevation. The interpolated surface is sampled into rings; each adjacent quad uses a consistent diagonal. Earcut triangulates the end caps. A circular cylinder is therefore polygonally approximated around its perimeter while its axial section through sampled cardinal vertices has exact requested dimensions.
 

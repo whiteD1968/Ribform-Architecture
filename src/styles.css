@@ -1433,3 +1433,24 @@ select {
 .statusbar > button {
   font-size: 9px;
 }
+.station-contour-label {
+  white-space: nowrap;
+  margin-left: 10px;
+  padding: 5px 8px;
+  border: 1px solid #d4c8df;
+  border-radius: 4px;
+  background: #fcfafded;
+  color: #85738f;
+  font-size: 10px;
+  box-shadow: 0 1px 5px #4731550a;
+}
+.station-contour-label span {
+  color: #8b7896;
+  font-size: 9px;
+}
+.station-contour-label.active {
+  background: #eee3f8;
+  border-color: #9863be;
+  color: #743d9c;
+  font-weight: 600;
+}

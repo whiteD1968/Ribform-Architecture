@@ -3,7 +3,7 @@ import type { Profile, Vec2, Vec3, MeshData, SurfaceSettings } from './types';
 import { EPS } from './types';
 import { area, selfIntersects } from './math';
 const TAU = 2 * Math.PI;
-export function profilePoint(p: Profile, angle: number): Vec2 {
+function controlOffset(p: Profile, angle: number): Vec2 {
   const n = p.controls.length,
     t = ((((angle / TAU) % 1) + 1) % 1) * n,
     i = Math.floor(t),
@@ -22,9 +22,19 @@ export function profilePoint(p: Profile, angle: number): Vec2 {
         (-a + 3 * b - 3 * d + e) * f * f * f)
     );
   };
+  return [smooth(0), smooth(1)];
+}
+/** Resample the existing displacement curve instead of resetting edited handles. */
+export function resizeProfileControls(p: Profile, count: number): Vec2[] {
+  if (!Number.isInteger(count) || count < 4 || count > 64)
+    throw new Error('Control point count must be an integer between 4 and 64.');
+  return Array.from({ length: count }, (_, i) => controlOffset(p, (i / count) * TAU));
+}
+export function profilePoint(p: Profile, angle: number): Vec2 {
+  const offset = controlOffset(p, angle);
   const r = p.radius * (1 + p.amplitude * Math.cos(p.lobes * angle));
-  const x = (r * Math.cos(angle) + p.radius * smooth(0)) * p.scaleX;
-  const y = (r * Math.sin(angle) + p.radius * smooth(1)) * p.scaleY;
+  const x = (r * Math.cos(angle) + p.radius * offset[0]) * p.scaleX;
+  const y = (r * Math.sin(angle) + p.radius * offset[1]) * p.scaleY;
   const rot = (p.rotation * Math.PI) / 180,
     c = Math.cos(rot),
     s = Math.sin(rot);
@@ -32,6 +42,10 @@ export function profilePoint(p: Profile, angle: number): Vec2 {
 }
 export function sampleProfile(p: Profile, count: number): Vec2[] {
   return Array.from({ length: count }, (_, i) => profilePoint(p, (i / count) * TAU));
+}
+/** The horizontal station contour is the same angular sample row used by the loft. */
+export function stationContour(p: Profile, count: number): Vec3[] {
+  return sampleProfile(p, count).map(([x, y]) => [x, y, p.z]);
 }
 export function sortedProfiles(surface: SurfaceSettings) {
   return [...surface.profiles].sort((a, b) => a.z - b.z);
