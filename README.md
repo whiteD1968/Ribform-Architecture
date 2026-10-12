@@ -31,7 +31,7 @@ The application is entirely local. No backend, API key, CAD service, or external
 - Outer-only, explicitly approximate radial inner offset, and independently editable inner surfaces.
 - Triangle/plane section extraction into closed contours, holes and disconnected components; positive radial half-plane clipping.
 - Real extruded sheet geometry, with configurable rib count, origin, orientation, angular sweep, thickness, and depth.
-- Horizontal support rings with radial width and elevation controls; calculated ring/rib overlap intervals for future joints.
+- Internal horizontal support rings with radial width and live elevation sliders; ring bodies extend inward with calculated overlap at the vertical ribs' inner edges for future joints.
 - Form, reference-surface, rib, wireframe, ring visibility, individual-rib isolation, orbit/pan/zoom/reset modes.
 - Actual 2D rib contour library, model dimensions, parameter history, save/open, and local autosave.
 - Geometry calculations run in a dedicated worker and are independent of React and Three.js.
@@ -40,7 +40,7 @@ The application is entirely local. No backend, API key, CAD service, or external
 
 **This build is not fabrication-ready.** There is no SVG/DXF cutting export. Saving JSON saves design parameters, not manufacturing files.
 
-- Offsets shrink section rays toward the section centroid. They are not true 3D normal offsets. Ring widths use the same radial construction, not a constant normal band width.
+- Offsets shrink section rays toward the section centroid. They are not true 3D normal offsets. Ring widths are radial from the configured rib origin, not constant normal band widths.
 - In outer-only mode, rib depth is measured inward along the rib's radial coordinate, using a shifted section difference. Inner-surface modes derive depth from the two surfaces instead.
 - The loft is a finite triangle mesh. Intersections are calculated on that mesh; they are not exact sections of an analytic spline surface.
 - Validity checks detect self-intersections in sampled profiles, invalid section topology, sampled inner/outer containment, and sampled insufficient rib depth. They are not a continuous mesh-intersection proof or a manufacturing certificate.

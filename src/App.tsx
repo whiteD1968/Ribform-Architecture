@@ -26,6 +26,7 @@ import { useStore } from './state/store';
 import { useGeometry } from './state/useGeometry';
 import { cloveProject, nextProfile, validateProject } from './geometry/build';
 import { resizeProfileControls, sortedProfiles, validateProfiles } from './geometry/profiles';
+import { ringElevationRange } from './geometry/rings';
 import type { Project } from './geometry/types';
 import Viewport from './components/Viewport';
 import ProfileEditor from './components/ProfileEditor';
@@ -46,6 +47,7 @@ export default function App() {
   const errors = result?.issues.filter((i) => i.severity === 'error') ?? [],
     warnings = result?.issues.filter((i) => i.severity === 'warning') ?? [];
   const activeRib = result?.ribs[Math.min(s.ribIndex, (result?.ribs.length ?? 1) - 1)];
+  const ringRange = ringElevationRange(p);
   useEffect(() => {
     if (s.ribIndex >= p.ribs.count) s.set({ ribIndex: p.ribs.count - 1 });
     if (s.surface === 'inner' && p.innerMode !== 'independent')
@@ -649,10 +651,16 @@ export default function App() {
                           <Minus size={13} />
                         </button>
                       </div>
-                      <div className="field-pair">
-                        <Field
+                      <div>
+                        <Slider
                           label="Elevation"
+                          ariaLabel={`Ring ${i + 1} elevation slider`}
                           value={ring.z}
+                          min={ringRange.min}
+                          max={ringRange.max}
+                          step={0.1}
+                          unit="mm"
+                          editable={false}
                           onChange={(v) =>
                             s.edit((p) => {
                               p.rings[i].z = v;
@@ -691,7 +699,8 @@ export default function App() {
                     Add support ring
                   </button>
                   <p className="field-note">
-                    Joint locations calculated. Notches and fit tolerances remain unvalidated.
+                    Rings sit inside the ribs with overlap at their inner edges. Notches and fit
+                    tolerances remain unvalidated.
                   </p>
                 </section>
                 <section className="control-section">

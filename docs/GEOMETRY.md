@@ -42,7 +42,9 @@ These checks deliberately do not imply a continuous proof of surface validity. S
 
 ## Rings and joints
 
-Each horizontal ring takes a planar section of the actual outer triangle mesh at its requested elevation. A radially contracted boundary defines its opening. Thickness is centered on its elevation; end collisions are rejected.
+Each horizontal ring follows the inner edges of the vertical ribs, with its body extending into the cavity and its outer edge partially engaging the ribs. At each sampled angle, the engine evaluates outer and inner boundaries at the bottom, middle, and top of the ring's material thickness. Outer-only mode derives the inner rib edge from radial depth; other modes use the actual inner mesh. Engagement is half the available rib depth or half the available ring width, whichever is smaller, after allowing for boundary movement across the thickness. This keeps the ring body inward of the rib while retaining a joint overlap. The ring contour also includes every actual rib direction.
+
+Ring elevation sliders are bounded by the end-station elevations, half the material thickness, and a 0.1 mm margin. Elevation edits update the model live. Unsupported multiple radial shells, an origin outside the shell, collapsed openings, and insufficient room for engagement produce geometry errors. The slab checks remain sampled validation, not a continuous collision proof.
 
 Ring contours are transformed into each rib's radial/perpendicular XY basis. A line scan intersects their material intervals with the rib's material interval at that elevation. Each overlap records the rib and ring IDs, Z, radial endpoints, nominal slot width, and an explicitly unset clearance. These are joint **candidates**, not cut notches. No fit tolerance or assembly direction is assumed.
 

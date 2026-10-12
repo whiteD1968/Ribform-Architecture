@@ -4,6 +4,7 @@ import { loft, profilePoint, resizeProfileControls, stationContour, surfaceLoop 
 import { extrude, horizontalFrame, positiveHalf, radialFrame, section } from './sections';
 import { area, bounds, cross, dot, multiArea, scanIntervals, sub, worldPoint } from './math';
 import type { Project, Vec2 } from './types';
+import { ringElevationRange } from './rings';
 function cylinder(): Project {
   const p = cloveProject();
   p.outer.profiles = [makeProfile('a', 0, 100), makeProfile('b', 200, 100)];
@@ -121,6 +122,64 @@ describe('profiles and lofts in millimeters', () => {
   });
 });
 describe('mesh plane intersections and planar sheet components', () => {
+  it('places support rings across the inner rib edge in every surface mode', () => {
+    for (const mode of ['none', 'approximate', 'independent'] as const) {
+      const p = cylinder();
+      p.innerMode = mode;
+      p.offset = 20;
+      p.rings = [{ id: 'support', z: 100, width: 28 }];
+      const built = buildProject(p);
+      expect(built.issues.filter((i) => i.severity === 'error')).toEqual([]);
+      const positive = scanIntervals(built.rings[0].contours, 0).filter(([lo]) => lo > 0)[0];
+      expect(positive[0]).toBeCloseTo(62, 5);
+      expect(positive[1]).toBeCloseTo(90, 5);
+      expect(built.notches[0].radialInterval[0]).toBeCloseTo(80, 5);
+      expect(built.notches[0].radialInterval[1]).toBeCloseTo(90, 5);
+      p.rings[0].width = 4;
+      const narrow = buildProject(p),
+        span = scanIntervals(narrow.rings[0].contours, 0).filter(([lo]) => lo > 0)[0];
+      expect(span[0]).toBeCloseTo(78, 5);
+      expect(span[1]).toBeCloseTo(82, 5);
+    }
+  });
+  it('keeps irregular rings inward of each actual rib across their material thickness', () => {
+    const p = cloveProject();
+    p.ribs.origin = [5, -8];
+    p.ribs.orientation = 13;
+    p.ribs.count = 17;
+    const built = buildProject(p);
+    expect(built.issues.filter((i) => i.severity === 'error')).toEqual([]);
+    for (const ring of built.rings)
+      for (const rib of built.ribs) {
+        const local = ring.contours.map((poly) =>
+          poly.map((loop) =>
+            loop.map(([x, y]) => {
+              const dx = x - rib.frame.origin[0],
+                dy = y - rib.frame.origin[1];
+              return [
+                dx * rib.frame.u[0] + dy * rib.frame.u[1],
+                dx * rib.frame.normal[0] + dy * rib.frame.normal[1],
+              ] as Vec2;
+            }),
+          ),
+        );
+        const interval = scanIntervals(local, 0).filter(([lo]) => lo >= 0)[0];
+        for (const dz of [-ring.thickness / 2, 0, ring.thickness / 2]) {
+          const span = scanIntervals(rib.contours, ring.frame.origin[2] + dz)[0];
+          expect(interval[0]).toBeLessThan(span[0]);
+          expect(interval[1]).toBeGreaterThan(span[0]);
+          expect(interval[1]).toBeLessThan(span[1]);
+        }
+      }
+  });
+  it('bounds elevation sliders by end stations and material thickness', () => {
+    const p = cylinder();
+    p.outer.profiles[0].z = 70;
+    p.outer.profiles[1].z = 340;
+    expect(ringElevationRange(p)).toEqual({ min: 71.6, max: 338.4 });
+    p.ribs.thickness = 6;
+    expect(ringElevationRange(p)).toEqual({ min: 73.1, max: 336.9 });
+  });
   it('extracts the known cylindrical full and radial sections, including planes through mesh vertices', () => {
     const p = cylinder(),
       mesh = loft(p.outer, 64, 4),

@@ -55,6 +55,8 @@ export function Slider({
   max,
   step = 1,
   unit = '',
+  editable = true,
+  ariaLabel,
 }: {
   label: string;
   value: number;
@@ -63,19 +65,41 @@ export function Slider({
   max: number;
   step?: number;
   unit?: string;
+  editable?: boolean;
+  ariaLabel?: string;
 }) {
   return (
     <div className="slider-field">
-      <Field {...{ label, value, onChange, min, max, step, unit }} />
+      {editable ? (
+        <Field {...{ label, value, onChange, min, max, step, unit }} />
+      ) : (
+        <div className="slider-value">
+          <span>{label}</span>
+          <output>
+            {Number(value.toFixed(1))} {unit}
+          </output>
+        </div>
+      )}
       <input
-        aria-label={`${label} slider`}
+        aria-label={ariaLabel ?? `${label} slider`}
         type="range"
         min={min}
         max={max}
         step={step}
         value={value}
+        disabled={max <= min}
         onChange={(e) => onChange(Number(e.target.value))}
       />
+      {!editable && (
+        <div className="slider-limits">
+          <span>
+            {min} {unit}
+          </span>
+          <span>
+            {max} {unit}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

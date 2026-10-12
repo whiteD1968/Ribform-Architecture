@@ -4,7 +4,7 @@
 
 Interactive profile/loft studio, independent geometry engine, multi-station editing and XY handles, the Clove sample, all three inner-surface modes, radial plane sections and thickness extrusion, support rings, ring/rib intersection data, viewport modes, planar part previews, dimensions, diagnostics, undo/redo, local autosave, JSON save/open, and regression tests.
 
-Stations now display selectable horizontal contours directly on the 3D form, with the active contour highlighted. Each profile has an editable 4–64 control-point count; changes resample the existing curve. The regression suite contains 17 tests, including station-to-loft correspondence and varying point counts.
+Stations display selectable horizontal contours directly on the 3D form, with the active contour highlighted. Each profile has an editable 4–64 control-point count; changes resample the existing curve. Support rings now extend inward from the vertical ribs' inner edges, leaving partial engagement for future notches. Elevation sliders use the model height and material thickness to set their bounds. The regression suite contains 20 tests, including station-to-loft correspondence, varying point counts, and internal ring engagement across all surface modes.
 
 ## Partial / explicitly approximate
 

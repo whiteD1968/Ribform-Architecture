@@ -1,6 +1,7 @@
-import type { BuildResult, Issue, MultiPolygon, PlanarPart, Project, Vec2 } from './types';
+import type { BuildResult, Issue, PlanarPart, Project, Vec2 } from './types';
 import { EPS } from './types';
-import { bounds, multiArea, scanIntervals, selfIntersects } from './math';
+import { bounds, multiArea, scanIntervals } from './math';
+import { internalRingContours } from './rings';
 import { loft, sortedProfiles } from './profiles';
 import { difference, horizontalFrame, positiveHalf, radialFrame, section } from './sections';
 
@@ -161,35 +162,8 @@ export function buildProject(p: Project): BuildResult {
         continue;
       }
       if (ring.width <= 0) throw new Error('Ring width must be positive.');
-      const frame = horizontalFrame(ring.z),
-        outer = section(result.outer, frame);
-      const inner: MultiPolygon = outer.map((poly) => [
-        poly[0].map(([x, y]) => {
-          const center = poly[0].reduce(
-            (s, v) => [s[0] + v[0] / poly[0].length, s[1] + v[1] / poly[0].length] as Vec2,
-            [0, 0] as Vec2,
-          );
-          const dx = x - center[0],
-            dy = y - center[1],
-            length = Math.hypot(dx, dy);
-          if (length <= ring.width) throw new Error('Ring radial width collapses its opening.');
-          return [
-            center[0] + dx * (1 - ring.width / length),
-            center[1] + dy * (1 - ring.width / length),
-          ];
-        }),
-      ]);
-      for (const poly of inner)
-        for (const loop of poly) {
-          const open =
-            loop.length > 1 &&
-            Math.hypot(loop[0][0] - loop.at(-1)![0], loop[0][1] - loop.at(-1)![1]) < EPS
-              ? loop.slice(0, -1)
-              : loop;
-          if (selfIntersects(open))
-            throw new Error('Ring opening self-intersects. Reduce the radial width.');
-        }
-      const contours = difference(outer, inner);
+      const frame = horizontalFrame(ring.z);
+      const contours = internalRingContours(result.outer, result.inner, p, ring);
       const part: PlanarPart = {
         id: ring.id,
         frame,

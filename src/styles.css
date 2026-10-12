@@ -1454,3 +1454,24 @@ select {
   color: #743d9c;
   font-weight: 600;
 }
+.slider-value,
+.slider-limits {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.slider-value {
+  font-size: 11px;
+  color: #796985;
+  margin: 7px 0 13px;
+}
+.slider-value output {
+  color: #754e93;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.slider-limits {
+  font-size: 9px;
+  color: #9989a5;
+  margin-top: 8px;
+}
